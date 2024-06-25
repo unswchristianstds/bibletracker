@@ -47,6 +47,7 @@
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
+            margin-bottom: 10px;
         }
         button:hover {
             background-color: #0056b3;
@@ -71,9 +72,20 @@
     <div class="container">
         <h1>Bible Reading Tracker</h1>
         <div class="form-group">
+            <label for="user">User</label>
+            <select id="user" onchange="switchUser()">
+                <!-- User options will be populated by JavaScript -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="new-user">New User</label>
+            <input type="text" id="new-user">
+            <button onclick="addUser()">Add User</button>
+        </div>
+        <div class="form-group">
             <label for="book">Book</label>
             <select id="book">
-                <!-- Options will be populated by JavaScript -->
+                <!-- Book options will be populated by JavaScript -->
             </select>
         </div>
         <div class="form-group">
@@ -82,7 +94,7 @@
         </div>
         <button onclick="logProgress()">Log Reading Progress</button>
         <div class="progress">
-            <div class="progress-bar" id="progress-bar" style="width: 0%;">0%</</div>
+            <div class="progress-bar" id="progress-bar" style="width: 0%;">0%</div>
         </div>
         <div class="chapter-list" id="chapter-list"></div>
         <button onclick="downloadProgress()">Download Progress</button>
@@ -159,7 +171,44 @@
             "Revelation": 22
         };
 
-        let readingProgress = {};
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let currentUser = localStorage.getItem('currentUser') || '';
+
+        function populateUserOptions() {
+            const userSelect = document.getElementById('user');
+            userSelect.innerHTML = '';
+            for (const user in users) {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                if (user === currentUser) {
+                    option.selected = true;
+                }
+                userSelect.appendChild(option);
+            }
+        }
+
+        function addUser() {
+            const newUser = document.getElementById('new-user').value.trim();
+            if (newUser && !users[newUser]) {
+                users[newUser] = {};
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = newUser;
+                localStorage.setItem('currentUser', currentUser);
+                populateUserOptions();
+                displayProgress();
+                document.getElementById('new-user').value = '';
+                alert(`User ${newUser} added.`);
+            } else {
+                alert('User already exists or invalid name.');
+            }
+        }
+
+        function switchUser() {
+            currentUser = document.getElementById('user').value;
+            localStorage.setItem('currentUser', currentUser);
+            displayProgress();
+        }
 
         function populateBookOptions() {
             const bookSelect = document.getElementById('book');
@@ -172,15 +221,20 @@
         }
 
         function logProgress() {
+            if (!currentUser) {
+                alert('Please select or add a user first.');
+                return;
+            }
             const book = document.getElementById('book').value;
             const chapter = parseInt(document.getElementById('chapter').value);
             if (bibleStructure[book] && chapter >= 1 && chapter <= bibleStructure[book]) {
-                if (!readingProgress[book]) {
-                    readingProgress[book] = [];
+                if (!users[currentUser][book]) {
+                    users[currentUser][book] = [];
                 }
-                if (!readingProgress[book].includes(chapter)) {
-                    readingProgress[book].push(chapter);
-                    readingProgress[book].sort((a, b) => a - b);
+                if (!users[currentUser][book].includes(chapter)) {
+                    users[currentUser][book].push(chapter);
+                    users[currentUser][book].sort((a, b) => a - b);
+                    localStorage.setItem('users', JSON.stringify(users));
                     displayProgress();
                     alert(`Logged: ${book} chapter ${chapter}`);
                 } else {
@@ -192,47 +246,7 @@
         }
 
         function displayProgress() {
+            if (!currentUser) return;
             const totalChapters = Object.values(bibleStructure).reduce((sum, chapters) => sum + chapters, 0);
-            const readChapters = Object.values(readingProgress).reduce((sum, chapters) => sum + chapters.length, 0);
-            const progressPercent = (readChapters / totalChapters * 100).toFixed(2);
-            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
-            document.getElementById('progress-bar').textContent = `${progressPercent}%`;
-
-            const chapterList = document.getElementById('chapter-list');
-            chapterList.innerHTML = '';
-            for (const book in readingProgress) {
-                if (readingProgress[book].length > 0) {
-                    const bookDiv = document.createElement('div');
-                    bookDiv.textContent = `${book}: ${readingProgress[book].length}/${bibleStructure[book]} chapters read`;
-                    chapterList.appendChild(bookDiv);
-                }
-            }
-        }
-
-        function downloadProgress() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(readingProgress));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "bible_reading_progress.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function uploadProgress(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                readingProgress = JSON.parse(event.target.result);
-                displayProgress();
-            };
-            reader.readAsText(file);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            populateBookOptions();
-            displayProgress();
-        });
-    </script>
-</body>
-</html>
+            const readChapters = Object.values(users[currentUser] || {}).reduce((sum, chapters) => sum + chapters.length, 0);
+            const progressPercent = (read
