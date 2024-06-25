@@ -66,6 +66,11 @@
         .chapter-list {
             margin-top: 20px;
         }
+        #chartContainer {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -93,11 +98,9 @@
         </div>
         <div class="chapter-list" id="chapter-list"></div>
         <button onclick="downloadProgress()">Download Progress</button>
-        <input type="file" id="upload" style="display: none;" onchange="uploadProgress(event)">
-        <button onclick="document.getElementById('upload').click()">Upload Progress</button>
-        <input type="file" id="upload-users" style="display: none;" onchange="uploadUsers(event)">
-        <button onclick="document.getElementById('upload-users').click()">Upload Users</button>
+        <div id="chartContainer"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const bibleStructure = {
             "Genesis": 50,
@@ -168,8 +171,25 @@
             "Revelation": 22
         };
 
-        let users = JSON.parse(localStorage.getItem('users')) || {};
-        let currentUser = localStorage.getItem('currentUser') || '';
+        let users = {
+            "JohnDoe": {
+                "Genesis": [1, 2, 3],
+                "Exodus": [1, 2]
+            },
+            "JaneSmith": {
+                "Matthew": [1, 2, 3, 4],
+                "Mark": [1, 2, 3]
+            },
+            "AliceJohnson": {
+                "Luke": [1, 2],
+                "John": [1]
+            },
+            "BobBrown": {
+                "Acts": [1, 2, 3, 4, 5]
+            }
+        };
+        
+        let currentUser = localStorage.getItem('currentUser') || Object.keys(users)[0];
 
         function populateUserOptions() {
             const userSelect = document.getElementById('user');
@@ -187,34 +207,6 @@
                 currentUser = userSelect.options[0].value;
                 localStorage.setItem('currentUser', currentUser);
                 displayProgress();
-            }
-        }
-
-        function uploadUsers(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const content = e.target.result;
-                    try {
-                        const userData = JSON.parse(content);
-                        if (Array.isArray(userData.users)) {
-                            userData.users.forEach(user => {
-                                if (!users[user]) {
-                                    users[user] = {};
-                                }
-                            });
-                            localStorage.setItem('users', JSON.stringify(users));
-                            populateUserOptions();
-                            alert('Users loaded successfully.');
-                        } else {
-                            alert('Invalid user data.');
-                        }
-                    } catch (error) {
-                        alert('Error parsing JSON file.');
-                    }
-                };
-                reader.readAsText(file);
             }
         }
 
@@ -261,4 +253,14 @@
 
         function displayProgress() {
             if (!currentUser) return;
-            const totalChapters = Object.values(b
+            const totalChapters = Object.values(bibleStructure).reduce((sum, chapters) => sum + chapters, 0);
+            const readChapters = Object.values(users[currentUser]).reduce((sum, chapters) => sum + chapters.length, 0);
+            const progress = (readChapters / totalChapters) * 100;
+
+            document.getElementById('progress-bar').style.width = `${progress.toFixed(2)}%`;
+            document.getElementById('progress-bar').textContent = `${progress.toFixed(2)}%`;
+
+            const chapterList = document.getElementById('chapter-list');
+            chapterList.innerHTML = '';
+
+            for (const
