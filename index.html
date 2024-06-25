@@ -186,6 +186,11 @@
                 }
                 userSelect.appendChild(option);
             }
+            if (!currentUser && userSelect.options.length > 0) {
+                currentUser = userSelect.options[0].value;
+                localStorage.setItem('currentUser', currentUser);
+                displayProgress();
+            }
         }
 
         function addUser() {
@@ -248,6 +253,4 @@
         function displayProgress() {
             if (!currentUser) return;
             const totalChapters = Object.values(bibleStructure).reduce((sum, chapters) => sum + chapters, 0);
-            const readChapters = Object.values(users[currentUser] || {}).reduce((sum, chapters) => sum + chapters.length, 0);
-            const progressPercent = (readChapters / totalChapters * 100).toFixed(2);
-            document.getElementById('progress
+            const readChapters = Object.values(users[currentUser] || {}).reduce((sum, chapters) => sum + chapters
