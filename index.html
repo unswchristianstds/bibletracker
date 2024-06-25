@@ -79,8 +79,8 @@
         </div>
         <div class="form-group">
             <label for="new-user">New User</label>
-            <input type="text" id="new-user">
-            <button onclick="addUser()">Add User</button>
+            <input type="text" id="new-user" disabled>
+            <button onclick="addUser()" disabled>Add User</button>
         </div>
         <div class="form-group">
             <label for="book">Book</label>
@@ -100,6 +100,8 @@
         <button onclick="downloadProgress()">Download Progress</button>
         <input type="file" id="upload" style="display: none;" onchange="uploadProgress(event)">
         <button onclick="document.getElementById('upload').click()">Upload Progress</button>
+        <input type="file" id="upload-users" style="display: none;" onchange="uploadUsers(event)">
+        <button onclick="document.getElementById('upload-users').click()">Upload Users</button>
     </div>
     <script>
         const bibleStructure = {
@@ -252,5 +254,4 @@
 
         function displayProgress() {
             if (!currentUser) return;
-            const totalChapters = Object.values(bibleStructure).reduce((sum, chapters) => sum + chapters, 0);
-            const readChapters = Object.values(users[currentUser] || {}).reduce((sum, chapters) => sum + chapters
+            const totalChapters = Object.values(bibleStructure).reduce((sum, chapters
