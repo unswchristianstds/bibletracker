@@ -78,11 +78,6 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="new-user">New User</label>
-            <input type="text" id="new-user" disabled>
-            <button onclick="addUser()" disabled>Add User</button>
-        </div>
-        <div class="form-group">
             <label for="book">Book</label>
             <select id="book">
                 <!-- Book options will be populated by JavaScript -->
@@ -195,19 +190,31 @@
             }
         }
 
-        function addUser() {
-            const newUser = document.getElementById('new-user').value.trim();
-            if (newUser && !users[newUser]) {
-                users[newUser] = {};
-                localStorage.setItem('users', JSON.stringify(users));
-                currentUser = newUser;
-                localStorage.setItem('currentUser', currentUser);
-                populateUserOptions();
-                displayProgress();
-                document.getElementById('new-user').value = '';
-                alert(`User ${newUser} added.`);
-            } else {
-                alert('User already exists or invalid name.');
+        function uploadUsers(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    try {
+                        const userData = JSON.parse(content);
+                        if (Array.isArray(userData.users)) {
+                            userData.users.forEach(user => {
+                                if (!users[user]) {
+                                    users[user] = {};
+                                }
+                            });
+                            localStorage.setItem('users', JSON.stringify(users));
+                            populateUserOptions();
+                            alert('Users loaded successfully.');
+                        } else {
+                            alert('Invalid user data.');
+                        }
+                    } catch (error) {
+                        alert('Error parsing JSON file.');
+                    }
+                };
+                reader.readAsText(file);
             }
         }
 
@@ -254,4 +261,4 @@
 
         function displayProgress() {
             if (!currentUser) return;
-            const totalChapters = Object.values(bibleStructure).reduce((sum, chapters
+            const totalChapters = Object.values(b
